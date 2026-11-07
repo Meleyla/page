@@ -1,8 +1,6 @@
 project:
   type: website
   output-dir: docs
-  resources:
-    - datos/camote_virus.csv
 
 website:
   title: "Reanálisis: virus en camote"
@@ -10,15 +8,8 @@ website:
     left:
       - href: index.qmd
         text: Inicio
-      - href: datos.qmd
-        text: Base de datos
-      - href: reanalisis.qmd
-        text: Reanálisis
-    right:
-      - icon: github
-        href: https://github.com/bryanchavez03/reanalisis-camote
   page-footer:
-    center: "Meleyla Soroe Torres · Ingeniería Agronómica, UNTRM"
+    center: "Meleyla Soroe Torres · UNTRM"
 
 lang: es
 
@@ -26,10 +17,7 @@ format:
   html:
     theme: cosmo
     toc: true
-    code-fold: show
-    code-tools: true
 
 execute:
   warning: false
   message: false
-  freeze: auto

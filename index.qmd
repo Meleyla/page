@@ -1,39 +1,66 @@
 ---
-title: "Reanálisis de un experimento de virus en camote"
-subtitle: "¿Cambian las conclusiones si se usa otra prueba de comparación de medias?"
+title: "Reanálisis: efecto de virus en el rendimiento de camote"
 author: "Meleyla Soroe Torres"
 date: today
 ---
 
-## ¿De qué trata?
+## Datos
 
-En esta página se **reanaliza una base de datos pública** de un experimento con camote (*Ipomoea batatas*) hecho en Tacna por el Centro Internacional de la Papa (CIP). La base viene en el paquete de R `agricolae` (de Mendiburu) y es uno de los ejemplos clásicos de enseñanza de diseño experimental en el Perú.
-
-El experimento evaluó cómo afectan dos virus al rendimiento del camote:
+Experimento del Centro Internacional de la Papa (CIP) en Tacna, incluido en el paquete `agricolae`.
+Diseño completamente al azar (DCA) con 4 tratamientos y 3 repeticiones:
 
 | Código | Tratamiento |
 |---|---|
 | `oo` | Plantas sanas (testigo) |
-| `cc` | SPCSV, virus del enanismo clorótico |
-| `ff` | SPFMV, virus del moteado plumoso |
+| `cc` | Virus SPCSV |
+| `ff` | Virus SPFMV |
 | `fc` | Complejo viral (SPFMV + SPCSV) |
 
-## ¿Por qué un reanálisis?
+```{r}
+library(agricolae)
+data(sweetpotato)
+sweetpotato
+```
 
-En el ejemplo original se analizan estos datos con ANOVA y la **prueba LSD de Fisher**. La LSD es la menos exigente de las pruebas de comparación múltiple: con 4 tratamientos se hacen 6 comparaciones y la probabilidad de encontrar una diferencia "falsa" aumenta.
+## ANOVA
 
-Este reanálisis revisa:
+```{r}
+modelo <- aov(yield ~ virus, data = sweetpotato)
+anova(modelo)
+```
 
-1. Si se cumplen los supuestos del ANOVA.
-2. Si las conclusiones cambian con pruebas más estrictas (Tukey).
-3. Si la pregunta del experimento se responde mejor comparando cada virus **contra el testigo sano** (prueba de Dunnett).
-4. Cuánto rendimiento se pierde con cada virus.
+Como *p* < 0.05, el virus tiene un efecto significativo en el rendimiento.
 
-## Contenido
+## Supuestos
 
-- [**Base de datos**](datos.qmd): descripción y descarga de los datos.
-- [**Reanálisis**](reanalisis.qmd): análisis completo en R con el código.
+```{r}
+shapiro.test(residuals(modelo))         # normalidad
+bartlett.test(yield ~ virus, sweetpotato)  # homogeneidad de varianzas
+```
 
-## Herramientas
+Ambas pruebas dan *p* > 0.05, así que se cumplen los supuestos del ANOVA.
 
-R, Quarto, `tidyverse`, `agricolae`, `inti` y `multcomp`. Publicado con GitHub Pages.
+## Comparación de medias
+
+El análisis original usó la prueba LSD. En este reanálisis se compara con Tukey, que es más estricta.
+
+```{r}
+LSD.test(modelo, "virus")$groups
+HSD.test(modelo, "virus")$groups
+```
+
+## Gráfico
+
+```{r}
+boxplot(yield ~ virus, data = sweetpotato,
+        col = "lightgreen",
+        names = c("SPCSV", "Complejo", "SPFMV", "Sano"),
+        ylab = "Rendimiento (kg/parcela)", xlab = "Tratamiento")
+```
+
+## Conclusión
+
+1. El virus afecta significativamente el rendimiento del camote.
+2. El complejo viral (SPFMV + SPCSV) es el más dañino: reduce el rendimiento en cerca de 65 % respecto a las plantas sanas.
+3. SPFMV solo casi no reduce el rendimiento.
+4. Con LSD se forman 3 grupos bien separados; con Tukey los grupos se traslapan. La conclusión depende de la prueba usada, y con solo 3 repeticiones conviene usar la prueba más estricta.

@@ -2,141 +2,50 @@
   {
     "objectID": "index.html",
     "href": "index.html",
-    "title": "Reanálisis de un experimento de virus en camote",
+    "title": "Reanálisis: efecto de virus en el rendimiento de camote",
     "section": "",
-    "text": "En esta página se reanaliza una base de datos pública de un experimento con camote (Ipomoea batatas) hecho en Tacna por el Centro Internacional de la Papa (CIP). La base viene en el paquete de R agricolae (de Mendiburu) y es uno de los ejemplos clásicos de enseñanza de diseño experimental en el Perú.\nEl experimento evaluó cómo afectan dos virus al rendimiento del camote:\n\n\n\nCódigo\nTratamiento\n\n\n\n\noo\nPlantas sanas (testigo)\n\n\ncc\nSPCSV, virus del enanismo clorótico\n\n\nff\nSPFMV, virus del moteado plumoso\n\n\nfc\nComplejo viral (SPFMV + SPCSV)"
+    "text": "Experimento del Centro Internacional de la Papa (CIP) en Tacna, incluido en el paquete agricolae. Diseño completamente al azar (DCA) con 4 tratamientos y 3 repeticiones:\n\n\n\nCódigo\nTratamiento\n\n\n\n\noo\nPlantas sanas (testigo)\n\n\ncc\nVirus SPCSV\n\n\nff\nVirus SPFMV\n\n\nfc\nComplejo viral (SPFMV + SPCSV)\n\n\n\n\nlibrary(agricolae)\ndata(sweetpotato)\nsweetpotato\n\n   virus yield\n1     cc  28.5\n2     cc  21.7\n3     cc  23.0\n4     fc  14.9\n5     fc  10.6\n6     fc  13.1\n7     ff  41.8\n8     ff  39.2\n9     ff  28.0\n10    oo  38.2\n11    oo  40.4\n12    oo  32.1"
   },
   {
-    "objectID": "index.html#de-qué-trata",
-    "href": "index.html#de-qué-trata",
-    "title": "Reanálisis de un experimento de virus en camote",
+    "objectID": "index.html#datos",
+    "href": "index.html#datos",
+    "title": "Reanálisis: efecto de virus en el rendimiento de camote",
     "section": "",
-    "text": "En esta página se reanaliza una base de datos pública de un experimento con camote (Ipomoea batatas) hecho en Tacna por el Centro Internacional de la Papa (CIP). La base viene en el paquete de R agricolae (de Mendiburu) y es uno de los ejemplos clásicos de enseñanza de diseño experimental en el Perú.\nEl experimento evaluó cómo afectan dos virus al rendimiento del camote:\n\n\n\nCódigo\nTratamiento\n\n\n\n\noo\nPlantas sanas (testigo)\n\n\ncc\nSPCSV, virus del enanismo clorótico\n\n\nff\nSPFMV, virus del moteado plumoso\n\n\nfc\nComplejo viral (SPFMV + SPCSV)"
+    "text": "Experimento del Centro Internacional de la Papa (CIP) en Tacna, incluido en el paquete agricolae. Diseño completamente al azar (DCA) con 4 tratamientos y 3 repeticiones:\n\n\n\nCódigo\nTratamiento\n\n\n\n\noo\nPlantas sanas (testigo)\n\n\ncc\nVirus SPCSV\n\n\nff\nVirus SPFMV\n\n\nfc\nComplejo viral (SPFMV + SPCSV)\n\n\n\n\nlibrary(agricolae)\ndata(sweetpotato)\nsweetpotato\n\n   virus yield\n1     cc  28.5\n2     cc  21.7\n3     cc  23.0\n4     fc  14.9\n5     fc  10.6\n6     fc  13.1\n7     ff  41.8\n8     ff  39.2\n9     ff  28.0\n10    oo  38.2\n11    oo  40.4\n12    oo  32.1"
   },
   {
-    "objectID": "index.html#por-qué-un-reanálisis",
-    "href": "index.html#por-qué-un-reanálisis",
-    "title": "Reanálisis de un experimento de virus en camote",
-    "section": "¿Por qué un reanálisis?",
-    "text": "¿Por qué un reanálisis?\nEn el ejemplo original se analizan estos datos con ANOVA y la prueba LSD de Fisher. La LSD es la menos exigente de las pruebas de comparación múltiple: con 4 tratamientos se hacen 6 comparaciones y la probabilidad de encontrar una diferencia “falsa” aumenta.\nEste reanálisis revisa:\n\nSi se cumplen los supuestos del ANOVA.\nSi las conclusiones cambian con pruebas más estrictas (Tukey).\nSi la pregunta del experimento se responde mejor comparando cada virus contra el testigo sano (prueba de Dunnett).\nCuánto rendimiento se pierde con cada virus."
+    "objectID": "index.html#anova",
+    "href": "index.html#anova",
+    "title": "Reanálisis: efecto de virus en el rendimiento de camote",
+    "section": "ANOVA",
+    "text": "ANOVA\n\nmodelo &lt;- aov(yield ~ virus, data = sweetpotato)\nanova(modelo)\n\nAnalysis of Variance Table\n\nResponse: yield\n          Df  Sum Sq Mean Sq F value    Pr(&gt;F)    \nvirus      3 1170.21  390.07  17.345 0.0007334 ***\nResiduals  8  179.91   22.49                      \n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\n\nComo p &lt; 0.05, el virus tiene un efecto significativo en el rendimiento."
   },
   {
-    "objectID": "index.html#contenido",
-    "href": "index.html#contenido",
-    "title": "Reanálisis de un experimento de virus en camote",
-    "section": "Contenido",
-    "text": "Contenido\n\nBase de datos: descripción y descarga de los datos.\nReanálisis: análisis completo en R con el código."
+    "objectID": "index.html#supuestos",
+    "href": "index.html#supuestos",
+    "title": "Reanálisis: efecto de virus en el rendimiento de camote",
+    "section": "Supuestos",
+    "text": "Supuestos\n\nshapiro.test(residuals(modelo))         # normalidad\n\n\n    Shapiro-Wilk normality test\n\ndata:  residuals(modelo)\nW = 0.95878, p-value = 0.7663\n\nbartlett.test(yield ~ virus, sweetpotato)  # homogeneidad de varianzas\n\n\n    Bartlett test of homogeneity of variances\n\ndata:  yield by virus\nBartlett's K-squared = 2.3886, df = 3, p-value = 0.4958\n\n\nAmbas pruebas dan p &gt; 0.05, así que se cumplen los supuestos del ANOVA."
   },
   {
-    "objectID": "index.html#herramientas",
-    "href": "index.html#herramientas",
-    "title": "Reanálisis de un experimento de virus en camote",
-    "section": "Herramientas",
-    "text": "Herramientas\nR, Quarto, tidyverse, agricolae, inti y multcomp. Publicado con GitHub Pages."
+    "objectID": "index.html#comparación-de-medias",
+    "href": "index.html#comparación-de-medias",
+    "title": "Reanálisis: efecto de virus en el rendimiento de camote",
+    "section": "Comparación de medias",
+    "text": "Comparación de medias\nEl análisis original usó la prueba LSD. En este reanálisis se compara con Tukey, que es más estricta.\n\nLSD.test(modelo, \"virus\")$groups\n\n      yield groups\noo 36.90000      a\nff 36.33333      a\ncc 24.40000      b\nfc 12.86667      c\n\nHSD.test(modelo, \"virus\")$groups\n\n      yield groups\noo 36.90000      a\nff 36.33333     ab\ncc 24.40000     bc\nfc 12.86667      c"
   },
   {
-    "objectID": "datos.html",
-    "href": "datos.html",
-    "title": "Base de datos",
-    "section": "",
-    "text": "Cultivo\nCamote costanero (Ipomoea batatas)\n\n\nLugar\nTacna, sur del Perú\n\n\nInstitución\nCentro Internacional de la Papa (CIP)\n\n\nDiseño\nCompletamente al azar (DCA)\n\n\nTratamientos\n4 (oo, cc, ff, fc)\n\n\nRepeticiones\n3\n\n\nUnidad experimental\nParcela con 50 plantas\n\n\nVariable\nRendimiento total por parcela (kg)\n\n\nFuente\nBase sweetpotato del paquete agricolae\n\n\n\nLos virus se transmitieron en los esquejes antes de sembrarlos en campo."
+    "objectID": "index.html#gráfico",
+    "href": "index.html#gráfico",
+    "title": "Reanálisis: efecto de virus en el rendimiento de camote",
+    "section": "Gráfico",
+    "text": "Gráfico\n\nboxplot(yield ~ virus, data = sweetpotato,\n        col = \"lightgreen\",\n        names = c(\"SPCSV\", \"Complejo\", \"SPFMV\", \"Sano\"),\n        ylab = \"Rendimiento (kg/parcela)\", xlab = \"Tratamiento\")"
   },
   {
-    "objectID": "datos.html#origen",
-    "href": "datos.html#origen",
-    "title": "Base de datos",
-    "section": "",
-    "text": "Cultivo\nCamote costanero (Ipomoea batatas)\n\n\nLugar\nTacna, sur del Perú\n\n\nInstitución\nCentro Internacional de la Papa (CIP)\n\n\nDiseño\nCompletamente al azar (DCA)\n\n\nTratamientos\n4 (oo, cc, ff, fc)\n\n\nRepeticiones\n3\n\n\nUnidad experimental\nParcela con 50 plantas\n\n\nVariable\nRendimiento total por parcela (kg)\n\n\nFuente\nBase sweetpotato del paquete agricolae\n\n\n\nLos virus se transmitieron en los esquejes antes de sembrarlos en campo."
-  },
-  {
-    "objectID": "datos.html#datos",
-    "href": "datos.html#datos",
-    "title": "Base de datos",
-    "section": "Datos",
-    "text": "Datos\n\n\nCódigo\nlibrary(tidyverse)\n\ncamote &lt;- read_csv(\"datos/camote_virus.csv\", show_col_types = FALSE)\n\nknitr::kable(camote, col.names = c(\"Virus\", \"Rendimiento (kg)\"))\n\n\n\n\n\nVirus\nRendimiento (kg)\n\n\n\n\ncc\n28.5\n\n\ncc\n21.7\n\n\ncc\n23.0\n\n\nfc\n14.9\n\n\nfc\n10.6\n\n\nfc\n13.1\n\n\nff\n41.8\n\n\nff\n39.2\n\n\nff\n28.0\n\n\noo\n38.2\n\n\noo\n40.4\n\n\noo\n32.1\n\n\n\n\n\nDescargar la base en CSV"
-  },
-  {
-    "objectID": "datos.html#diccionario-de-variables",
-    "href": "datos.html#diccionario-de-variables",
-    "title": "Base de datos",
-    "section": "Diccionario de variables",
-    "text": "Diccionario de variables\n\n\n\n\n\n\n\n\nVariable\nTipo\nDescripción\n\n\n\n\nvirus\nFactor\nTratamiento: oo sano, cc SPCSV, ff SPFMV, fc complejo viral\n\n\nyield\nNumérica\nRendimiento total de la parcela (kg)"
-  },
-  {
-    "objectID": "datos.html#limitación-principal",
-    "href": "datos.html#limitación-principal",
-    "title": "Base de datos",
-    "section": "Limitación principal",
-    "text": "Limitación principal\nSolo hay 3 repeticiones por tratamiento (12 datos). Con tan pocos datos el experimento tiene poca potencia para detectar diferencias pequeñas, y las pruebas de supuestos (normalidad, homogeneidad) también pierden capacidad de detectar problemas. Esto se tiene en cuenta en la interpretación."
-  },
-  {
-    "objectID": "reanalisis.html",
-    "href": "reanalisis.html",
-    "title": "Reanálisis",
-    "section": "",
-    "text": "Código\nlibrary(agricolae)\nlibrary(inti)\nlibrary(multcomp)\nlibrary(tidyverse)   # al final, para que select() sea el de dplyr\n\ncamote &lt;- read_csv(\"datos/camote_virus.csv\", show_col_types = FALSE) |&gt;\n  mutate(virus = factor(virus, levels = c(\"oo\", \"cc\", \"ff\", \"fc\"),\n                        labels = c(\"Sano\", \"SPCSV\", \"SPFMV\", \"Complejo\")))"
-  },
-  {
-    "objectID": "reanalisis.html#paquetes-y-datos",
-    "href": "reanalisis.html#paquetes-y-datos",
-    "title": "Reanálisis",
-    "section": "",
-    "text": "Código\nlibrary(agricolae)\nlibrary(inti)\nlibrary(multcomp)\nlibrary(tidyverse)   # al final, para que select() sea el de dplyr\n\ncamote &lt;- read_csv(\"datos/camote_virus.csv\", show_col_types = FALSE) |&gt;\n  mutate(virus = factor(virus, levels = c(\"oo\", \"cc\", \"ff\", \"fc\"),\n                        labels = c(\"Sano\", \"SPCSV\", \"SPFMV\", \"Complejo\")))"
-  },
-  {
-    "objectID": "reanalisis.html#exploración",
-    "href": "reanalisis.html#exploración",
-    "title": "Reanálisis",
-    "section": "1. Exploración",
-    "text": "1. Exploración\n\n\nCódigo\ncamote |&gt;\n  group_by(virus) |&gt;\n  summarise(media = mean(yield), de = sd(yield), min = min(yield), max = max(yield)) |&gt;\n  mutate(across(where(is.numeric), \\(x) round(x, 2))) |&gt;\n  knitr::kable(col.names = c(\"Tratamiento\", \"Media (kg)\", \"DE\", \"Mín\", \"Máx\"))\n\n\n\n\n\nTratamiento\nMedia (kg)\nDE\nMín\nMáx\n\n\n\n\nSano\n36.90\n4.30\n32.1\n40.4\n\n\nSPCSV\n24.40\n3.61\n21.7\n28.5\n\n\nSPFMV\n36.33\n7.33\n28.0\n41.8\n\n\nComplejo\n12.87\n2.16\n10.6\n14.9\n\n\n\n\n\n\n\nCódigo\nggplot(camote, aes(virus, yield)) +\n  stat_summary(fun = mean, geom = \"col\", fill = \"#7FB77E\", width = 0.6) +\n  geom_point(size = 2.5) +\n  labs(x = NULL, y = \"Rendimiento (kg/parcela)\") +\n  theme_minimal(base_size = 13)\n\n\n\n\n\n\n\n\nFigura 1: Rendimiento por parcela según el virus inoculado. Cada punto es una repetición.\n\n\n\n\n\nA simple vista, el complejo viral produce mucho menos que el resto, y las plantas sanas y las infectadas solo con SPFMV rinden parecido."
-  },
-  {
-    "objectID": "reanalisis.html#anova",
-    "href": "reanalisis.html#anova",
-    "title": "Reanálisis",
-    "section": "2. ANOVA",
-    "text": "2. ANOVA\nModelo del DCA:\n\\[Y_{ij} = \\mu + \\tau_i + \\varepsilon_{ij}\\]\n\n\nCódigo\nmodelo &lt;- aov(yield ~ virus, data = camote)\nanova(modelo)\n\n\nAnalysis of Variance Table\n\nResponse: yield\n          Df  Sum Sq Mean Sq F value    Pr(&gt;F)    \nvirus      3 1170.21  390.07  17.345 0.0007334 ***\nResiduals  8  179.91   22.49                      \n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\n\nCon p &lt; 0.001 hay diferencias entre tratamientos. Esto coincide con el análisis original.\n\nTamaño del efecto\nEl p-valor dice si hay diferencias, pero no qué tan grandes son. El eta cuadrado (η²) indica qué proporción de la variación total se explica por el virus:\n\n\nCódigo\ntabla &lt;- anova(modelo)\neta2 &lt;- tabla[\"virus\", \"Sum Sq\"] / sum(tabla[, \"Sum Sq\"])\nround(eta2, 2)\n\n\n[1] 0.87\n\n\nEl virus explica cerca del 87 % de la variación del rendimiento. Es un efecto muy grande.\n\n\nCoeficiente de variación\n\n\nCódigo\ncv.model(modelo)\n\n\n[1] 17.1666\n\n\nUn CV menor a 20 % es aceptable para experimentos de campo."
-  },
-  {
-    "objectID": "reanalisis.html#supuestos",
-    "href": "reanalisis.html#supuestos",
-    "title": "Reanálisis",
-    "section": "3. Supuestos",
-    "text": "3. Supuestos\n\n\nCódigo\nshapiro.test(residuals(modelo))         # normalidad de residuos\n\n\n\n    Shapiro-Wilk normality test\n\ndata:  residuals(modelo)\nW = 0.95878, p-value = 0.7663\n\n\nCódigo\nbartlett.test(yield ~ virus, camote)    # homogeneidad de varianzas\n\n\n\n    Bartlett test of homogeneity of variances\n\ndata:  yield by virus\nBartlett's K-squared = 2.3886, df = 3, p-value = 0.4958\n\n\n\n\nCódigo\nplot_diagnostic(data = camote, formula = yield ~ virus) |&gt;\n  cowplot::plot_grid(plotlist = _, ncol = 2)\n\n\n\n\n\n\n\n\nFigura 2: Diagnóstico de residuos\n\n\n\n\n\nAmbas pruebas dan p &gt; 0.05, así que no hay evidencia de que se violen los supuestos. Con solo 12 datos estas pruebas tienen poca potencia, por eso se confirma el resultado con una prueba no paramétrica, que no necesita normalidad:\n\n\nCódigo\nkruskal.test(yield ~ virus, data = camote)\n\n\n\n    Kruskal-Wallis rank sum test\n\ndata:  yield by virus\nKruskal-Wallis chi-squared = 8.6923, df = 3, p-value = 0.03367\n\n\nKruskal-Wallis también da p &lt; 0.05. El efecto del virus se confirma por dos caminos distintos."
-  },
-  {
-    "objectID": "reanalisis.html#comparación-de-medias-cambian-las-conclusiones",
-    "href": "reanalisis.html#comparación-de-medias-cambian-las-conclusiones",
-    "title": "Reanálisis",
-    "section": "4. Comparación de medias: ¿cambian las conclusiones?",
-    "text": "4. Comparación de medias: ¿cambian las conclusiones?\n\nLSD de Fisher (análisis original)\n\n\nCódigo\nlsd &lt;- LSD.test(modelo, \"virus\")\nlsd$groups\n\n\n            yield groups\nSano     36.90000      a\nSPFMV    36.33333      a\nSPCSV    24.40000      b\nComplejo 12.86667      c\n\n\n\n\nTukey HSD (más estricta)\n\n\nCódigo\ntukey &lt;- HSD.test(modelo, \"virus\")\ntukey$groups\n\n\n            yield groups\nSano     36.90000      a\nSPFMV    36.33333     ab\nSPCSV    24.40000     bc\nComplejo 12.86667      c\n\n\n\n\nComparación lado a lado\n\n\nCódigo\nfull_join(\n  lsd$groups   |&gt; rownames_to_column(\"virus\") |&gt; dplyr::select(virus, media = yield, LSD = groups),\n  tukey$groups |&gt; rownames_to_column(\"virus\") |&gt; dplyr::select(virus, Tukey = groups),\n  by = \"virus\"\n) |&gt;\n  mutate(media = round(media, 1)) |&gt;\n  knitr::kable(col.names = c(\"Tratamiento\", \"Media (kg)\", \"LSD\", \"Tukey\"))\n\n\n\n\n\nTratamiento\nMedia (kg)\nLSD\nTukey\n\n\n\n\nSano\n36.9\na\na\n\n\nSPFMV\n36.3\na\nab\n\n\nSPCSV\n24.4\nb\nbc\n\n\nComplejo\n12.9\nc\nc\n\n\n\n\n\nAquí cambia la conclusión:\n\nCon LSD hay tres grupos bien separados: (Sano, SPFMV) &gt; SPCSV &gt; Complejo.\nCon Tukey los grupos se traslapan: SPCSV ya no se distingue de SPFMV ni del complejo viral.\n\nLa diferencia se debe a que LSD no corrige por hacer 6 comparaciones a la vez. Tukey sí lo hace y por eso es más conservadora. Con solo 3 repeticiones, las diferencias intermedias no son tan claras como sugiere el análisis original."
-  },
-  {
-    "objectID": "reanalisis.html#la-pregunta-correcta-cada-virus-contra-el-testigo",
-    "href": "reanalisis.html#la-pregunta-correcta-cada-virus-contra-el-testigo",
-    "title": "Reanálisis",
-    "section": "5. La pregunta correcta: cada virus contra el testigo",
-    "text": "5. La pregunta correcta: cada virus contra el testigo\nEl objetivo del experimento es saber cuánto daña cada virus respecto a las plantas sanas. Para eso no hace falta comparar todos contra todos: la prueba de Dunnett compara cada tratamiento solo con el testigo, y así gana precisión.\n\n\nCódigo\ndunnett &lt;- glht(modelo, linfct = mcp(virus = \"Dunnett\"))\nsummary(dunnett)\n\n\n\n     Simultaneous Tests for General Linear Hypotheses\n\nMultiple Comparisons of Means: Dunnett Contrasts\n\n\nFit: aov(formula = yield ~ virus, data = camote)\n\nLinear Hypotheses:\n                     Estimate Std. Error t value Pr(&gt;|t|)    \nSPCSV - Sano == 0    -12.5000     3.8721  -3.228   0.0297 *  \nSPFMV - Sano == 0     -0.5667     3.8721  -0.146   0.9976    \nComplejo - Sano == 0 -24.0333     3.8721  -6.207   &lt;0.001 ***\n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n(Adjusted p values reported -- single-step method)\n\n\n\n\nCódigo\nconfint(dunnett) |&gt;\n  broom::tidy() |&gt;\n  mutate(contrast = str_remove(contrast, \" - Sano\")) |&gt;\n  ggplot(aes(x = estimate, y = contrast)) +\n  geom_vline(xintercept = 0, linetype = \"dashed\") +\n  geom_pointrange(aes(xmin = conf.low, xmax = conf.high), color = \"#C0392B\") +\n  labs(x = \"Diferencia con plantas sanas (kg/parcela)\", y = NULL) +\n  theme_minimal(base_size = 13)\n\n\n\n\n\n\n\n\nFigura 3: Diferencia de rendimiento de cada virus respecto a las plantas sanas (intervalos de confianza al 95 %, Dunnett). Si el intervalo no toca el cero, la diferencia es significativa."
-  },
-  {
-    "objectID": "reanalisis.html#pérdida-de-rendimiento",
-    "href": "reanalisis.html#pérdida-de-rendimiento",
-    "title": "Reanálisis",
-    "section": "6. Pérdida de rendimiento",
-    "text": "6. Pérdida de rendimiento\n\n\nCódigo\nsano &lt;- mean(camote$yield[camote$virus == \"Sano\"])\n\ncamote |&gt;\n  group_by(virus) |&gt;\n  summarise(media = mean(yield)) |&gt;\n  mutate(perdida_kg = sano - media,\n         perdida_pct = perdida_kg / sano * 100) |&gt;\n  filter(virus != \"Sano\") |&gt;\n  mutate(across(where(is.numeric), \\(x) round(x, 1))) |&gt;\n  knitr::kable(col.names = c(\"Virus\", \"Media (kg)\", \"Pérdida (kg)\", \"Pérdida (%)\"))\n\n\n\n\n\nVirus\nMedia (kg)\nPérdida (kg)\nPérdida (%)\n\n\n\n\nSPCSV\n24.4\n12.5\n33.9\n\n\nSPFMV\n36.3\n0.6\n1.5\n\n\nComplejo\n12.9\n24.0\n65.1"
-  },
-  {
-    "objectID": "reanalisis.html#conclusiones",
-    "href": "reanalisis.html#conclusiones",
-    "title": "Reanálisis",
-    "section": "Conclusiones",
-    "text": "Conclusiones\n\nEl efecto del virus es real y muy grande: lo confirman el ANOVA, Kruskal-Wallis y un η² de 0.87.\nEl complejo viral (SPFMV + SPCSV) es el más dañino: reduce el rendimiento en cerca de 65 % respecto a las plantas sanas.\nSPCSV solo también reduce el rendimiento de forma significativa (alrededor de 34 %, Dunnett p ≈ 0.03).\nSPFMV solo no reduce el rendimiento: su diferencia con las plantas sanas es casi cero.\nLa prueba elegida importa: la LSD del análisis original muestra grupos más separados de lo que permiten los datos. Con Tukey, SPCSV no se distingue claramente de los otros virus. Para este experimento, Dunnett es la prueba más adecuada porque responde directamente la pregunta.\nRecomendación: con 3 repeticiones el experimento tiene poca potencia. En un nuevo ensayo convendría usar al menos 5 repeticiones."
-  },
-  {
-    "objectID": "reanalisis.html#referencias",
-    "href": "reanalisis.html#referencias",
-    "title": "Reanálisis",
-    "section": "Referencias",
-    "text": "Referencias\n\nde Mendiburu, F. (2023). agricolae: Statistical Procedures for Agricultural Research. R package.\nLozano-Isla, F. (2024). inti: Tools and Statistical Procedures in Plant Science. R package.\nHothorn, T., Bretz, F. & Westfall, P. (2008). Simultaneous inference in general parametric models. Biometrical Journal, 50(3), 346–363."
+    "objectID": "index.html#conclusión",
+    "href": "index.html#conclusión",
+    "title": "Reanálisis: efecto de virus en el rendimiento de camote",
+    "section": "Conclusión",
+    "text": "Conclusión\n\nEl virus afecta significativamente el rendimiento del camote.\nEl complejo viral (SPFMV + SPCSV) es el más dañino: reduce el rendimiento en cerca de 65 % respecto a las plantas sanas.\nSPFMV solo casi no reduce el rendimiento.\nCon LSD se forman 3 grupos bien separados; con Tukey los grupos se traslapan. La conclusión depende de la prueba usada, y con solo 3 repeticiones conviene usar la prueba más estricta."
   }
 ]
