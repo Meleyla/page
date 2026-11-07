@@ -1,0 +1,39 @@
+---
+title: "Reanálisis de un experimento de virus en camote"
+subtitle: "¿Cambian las conclusiones si se usa otra prueba de comparación de medias?"
+author: "Bryan Chávez Velaisosa"
+date: today
+---
+
+## ¿De qué trata?
+
+En esta página se **reanaliza una base de datos pública** de un experimento con camote (*Ipomoea batatas*) hecho en Tacna por el Centro Internacional de la Papa (CIP). La base viene en el paquete de R `agricolae` (de Mendiburu) y es uno de los ejemplos clásicos de enseñanza de diseño experimental en el Perú.
+
+El experimento evaluó cómo afectan dos virus al rendimiento del camote:
+
+| Código | Tratamiento |
+|---|---|
+| `oo` | Plantas sanas (testigo) |
+| `cc` | SPCSV, virus del enanismo clorótico |
+| `ff` | SPFMV, virus del moteado plumoso |
+| `fc` | Complejo viral (SPFMV + SPCSV) |
+
+## ¿Por qué un reanálisis?
+
+En el ejemplo original se analizan estos datos con ANOVA y la **prueba LSD de Fisher**. La LSD es la menos exigente de las pruebas de comparación múltiple: con 4 tratamientos se hacen 6 comparaciones y la probabilidad de encontrar una diferencia "falsa" aumenta.
+
+Este reanálisis revisa:
+
+1. Si se cumplen los supuestos del ANOVA.
+2. Si las conclusiones cambian con pruebas más estrictas (Tukey).
+3. Si la pregunta del experimento se responde mejor comparando cada virus **contra el testigo sano** (prueba de Dunnett).
+4. Cuánto rendimiento se pierde con cada virus.
+
+## Contenido
+
+- [**Base de datos**](datos.qmd): descripción y descarga de los datos.
+- [**Reanálisis**](reanalisis.qmd): análisis completo en R con el código.
+
+## Herramientas
+
+R, Quarto, `tidyverse`, `agricolae`, `inti` y `multcomp`. Publicado con GitHub Pages.
