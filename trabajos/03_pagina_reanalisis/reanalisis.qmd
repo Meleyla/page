@@ -1,0 +1,198 @@
+---
+title: "Reanálisis"
+---
+
+## Paquetes y datos
+
+```{r}
+#| label: paquetes
+library(agricolae)
+library(inti)
+library(multcomp)
+library(tidyverse)   # al final, para que select() sea el de dplyr
+
+camote <- read_csv("datos/camote_virus.csv", show_col_types = FALSE) |>
+  mutate(virus = factor(virus, levels = c("oo", "cc", "ff", "fc"),
+                        labels = c("Sano", "SPCSV", "SPFMV", "Complejo")))
+```
+
+## 1. Exploración
+
+```{r}
+#| label: resumen
+camote |>
+  group_by(virus) |>
+  summarise(media = mean(yield), de = sd(yield), min = min(yield), max = max(yield)) |>
+  mutate(across(where(is.numeric), \(x) round(x, 2))) |>
+  knitr::kable(col.names = c("Tratamiento", "Media (kg)", "DE", "Mín", "Máx"))
+```
+
+```{r}
+#| label: fig-exploracion
+#| fig-cap: "Rendimiento por parcela según el virus inoculado. Cada punto es una repetición."
+#| fig-width: 7
+#| fig-height: 4.5
+ggplot(camote, aes(virus, yield)) +
+  stat_summary(fun = mean, geom = "col", fill = "#7FB77E", width = 0.6) +
+  geom_point(size = 2.5) +
+  labs(x = NULL, y = "Rendimiento (kg/parcela)") +
+  theme_minimal(base_size = 13)
+```
+
+A simple vista, el complejo viral produce mucho menos que el resto, y las plantas sanas y las infectadas solo con SPFMV rinden parecido.
+
+## 2. ANOVA
+
+Modelo del DCA:
+
+$$Y_{ij} = \mu + \tau_i + \varepsilon_{ij}$$
+
+```{r}
+#| label: anova
+modelo <- aov(yield ~ virus, data = camote)
+anova(modelo)
+```
+
+Con *p* < 0.001 hay diferencias entre tratamientos. Esto coincide con el análisis original.
+
+### Tamaño del efecto
+
+El *p*-valor dice si hay diferencias, pero no qué tan grandes son. El **eta cuadrado** (η²) indica qué proporción de la variación total se explica por el virus:
+
+```{r}
+#| label: eta2
+tabla <- anova(modelo)
+eta2 <- tabla["virus", "Sum Sq"] / sum(tabla[, "Sum Sq"])
+round(eta2, 2)
+```
+
+El virus explica cerca del **87 %** de la variación del rendimiento. Es un efecto muy grande.
+
+### Coeficiente de variación
+
+```{r}
+#| label: cv
+cv.model(modelo)
+```
+
+Un CV menor a 20 % es aceptable para experimentos de campo.
+
+## 3. Supuestos
+
+```{r}
+#| label: supuestos
+shapiro.test(residuals(modelo))         # normalidad de residuos
+bartlett.test(yield ~ virus, camote)    # homogeneidad de varianzas
+```
+
+```{r}
+#| label: fig-diagnostico
+#| fig-cap: "Diagnóstico de residuos"
+#| fig-width: 8
+#| fig-height: 6
+plot_diagnostic(data = camote, formula = yield ~ virus) |>
+  cowplot::plot_grid(plotlist = _, ncol = 2)
+```
+
+Ambas pruebas dan *p* > 0.05, así que **no hay evidencia** de que se violen los supuestos. Con solo 12 datos estas pruebas tienen poca potencia, por eso se confirma el resultado con una prueba no paramétrica, que no necesita normalidad:
+
+```{r}
+#| label: kruskal
+kruskal.test(yield ~ virus, data = camote)
+```
+
+Kruskal-Wallis también da *p* < 0.05. El efecto del virus se confirma por dos caminos distintos.
+
+## 4. Comparación de medias: ¿cambian las conclusiones?
+
+### LSD de Fisher (análisis original)
+
+```{r}
+#| label: lsd
+lsd <- LSD.test(modelo, "virus")
+lsd$groups
+```
+
+### Tukey HSD (más estricta)
+
+```{r}
+#| label: tukey
+tukey <- HSD.test(modelo, "virus")
+tukey$groups
+```
+
+### Comparación lado a lado
+
+```{r}
+#| label: comparacion
+full_join(
+  lsd$groups   |> rownames_to_column("virus") |> dplyr::select(virus, media = yield, LSD = groups),
+  tukey$groups |> rownames_to_column("virus") |> dplyr::select(virus, Tukey = groups),
+  by = "virus"
+) |>
+  mutate(media = round(media, 1)) |>
+  knitr::kable(col.names = c("Tratamiento", "Media (kg)", "LSD", "Tukey"))
+```
+
+**Aquí cambia la conclusión:**
+
+- Con **LSD** hay tres grupos bien separados: (Sano, SPFMV) > SPCSV > Complejo.
+- Con **Tukey** los grupos se traslapan: SPCSV ya no se distingue de SPFMV ni del complejo viral.
+
+La diferencia se debe a que LSD no corrige por hacer 6 comparaciones a la vez. Tukey sí lo hace y por eso es más conservadora. Con solo 3 repeticiones, las diferencias intermedias no son tan claras como sugiere el análisis original.
+
+## 5. La pregunta correcta: cada virus contra el testigo
+
+El objetivo del experimento es saber **cuánto daña cada virus respecto a las plantas sanas**. Para eso no hace falta comparar todos contra todos: la prueba de **Dunnett** compara cada tratamiento solo con el testigo, y así gana precisión.
+
+```{r}
+#| label: dunnett
+dunnett <- glht(modelo, linfct = mcp(virus = "Dunnett"))
+summary(dunnett)
+```
+
+```{r}
+#| label: fig-dunnett
+#| fig-cap: "Diferencia de rendimiento de cada virus respecto a las plantas sanas (intervalos de confianza al 95 %, Dunnett). Si el intervalo no toca el cero, la diferencia es significativa."
+#| fig-width: 7
+#| fig-height: 3.5
+confint(dunnett) |>
+  broom::tidy() |>
+  mutate(contrast = str_remove(contrast, " - Sano")) |>
+  ggplot(aes(x = estimate, y = contrast)) +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  geom_pointrange(aes(xmin = conf.low, xmax = conf.high), color = "#C0392B") +
+  labs(x = "Diferencia con plantas sanas (kg/parcela)", y = NULL) +
+  theme_minimal(base_size = 13)
+```
+
+## 6. Pérdida de rendimiento
+
+```{r}
+#| label: perdida
+sano <- mean(camote$yield[camote$virus == "Sano"])
+
+camote |>
+  group_by(virus) |>
+  summarise(media = mean(yield)) |>
+  mutate(perdida_kg = sano - media,
+         perdida_pct = perdida_kg / sano * 100) |>
+  filter(virus != "Sano") |>
+  mutate(across(where(is.numeric), \(x) round(x, 1))) |>
+  knitr::kable(col.names = c("Virus", "Media (kg)", "Pérdida (kg)", "Pérdida (%)"))
+```
+
+## Conclusiones
+
+1. **El efecto del virus es real y muy grande**: lo confirman el ANOVA, Kruskal-Wallis y un η² de 0.87.
+2. **El complejo viral (SPFMV + SPCSV) es el más dañino**: reduce el rendimiento en cerca de 65 % respecto a las plantas sanas.
+3. **SPCSV solo también reduce el rendimiento** de forma significativa (alrededor de 34 %, Dunnett *p* ≈ 0.03).
+4. **SPFMV solo no reduce el rendimiento**: su diferencia con las plantas sanas es casi cero.
+5. **La prueba elegida importa**: la LSD del análisis original muestra grupos más separados de lo que permiten los datos. Con Tukey, SPCSV no se distingue claramente de los otros virus. Para este experimento, Dunnett es la prueba más adecuada porque responde directamente la pregunta.
+6. **Recomendación**: con 3 repeticiones el experimento tiene poca potencia. En un nuevo ensayo convendría usar al menos 5 repeticiones.
+
+## Referencias
+
+- de Mendiburu, F. (2023). *agricolae: Statistical Procedures for Agricultural Research*. R package.
+- Lozano-Isla, F. (2024). *inti: Tools and Statistical Procedures in Plant Science*. R package.
+- Hothorn, T., Bretz, F. & Westfall, P. (2008). Simultaneous inference in general parametric models. *Biometrical Journal*, 50(3), 346–363.

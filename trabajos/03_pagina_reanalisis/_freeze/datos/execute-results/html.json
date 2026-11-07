@@ -1,0 +1,15 @@
+{
+  "hash": "8f347cd86aaaf0f3a5bdd5723c952d98",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"Base de datos\"\n---\n\n## Origen\n\n| | |\n|---|---|\n| Cultivo | Camote costanero (*Ipomoea batatas*) |\n| Lugar | Tacna, sur del Perú |\n| Institución | Centro Internacional de la Papa (CIP) |\n| Diseño | Completamente al azar (DCA) |\n| Tratamientos | 4 (`oo`, `cc`, `ff`, `fc`) |\n| Repeticiones | 3 |\n| Unidad experimental | Parcela con 50 plantas |\n| Variable | Rendimiento total por parcela (kg) |\n| Fuente | Base `sweetpotato` del paquete `agricolae` |\n\nLos virus se transmitieron en los esquejes antes de sembrarlos en campo.\n\n## Datos\n\n\n::: {.cell}\n\n```{.r .cell-code}\nlibrary(tidyverse)\n\ncamote <- read_csv(\"datos/camote_virus.csv\", show_col_types = FALSE)\n\nknitr::kable(camote, col.names = c(\"Virus\", \"Rendimiento (kg)\"))\n```\n\n::: {.cell-output-display}\n\n\n|Virus | Rendimiento (kg)|\n|:-----|----------------:|\n|cc    |             28.5|\n|cc    |             21.7|\n|cc    |             23.0|\n|fc    |             14.9|\n|fc    |             10.6|\n|fc    |             13.1|\n|ff    |             41.8|\n|ff    |             39.2|\n|ff    |             28.0|\n|oo    |             38.2|\n|oo    |             40.4|\n|oo    |             32.1|\n\n\n:::\n:::\n\n\n[Descargar la base en CSV](datos/camote_virus.csv)\n\n## Diccionario de variables\n\n| Variable | Tipo | Descripción |\n|---|---|---|\n| `virus` | Factor | Tratamiento: `oo` sano, `cc` SPCSV, `ff` SPFMV, `fc` complejo viral |\n| `yield` | Numérica | Rendimiento total de la parcela (kg) |\n\n## Limitación principal\n\nSolo hay **3 repeticiones por tratamiento** (12 datos). Con tan pocos datos el experimento tiene poca potencia para detectar diferencias pequeñas, y las pruebas de supuestos (normalidad, homogeneidad) también pierden capacidad de detectar problemas. Esto se tiene en cuenta en la interpretación.\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

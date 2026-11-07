@@ -1,0 +1,188 @@
+---
+title: "Diseño experimental y libro de campo con Tarpuy"
+subtitle: "Germinación de quinua (*Chenopodium quinoa*) bajo estrés salino"
+author: "Bryan Chávez Velaisosa"
+date: today
+lang: es
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    number-sections: true
+    embed-resources: true
+    code-fold: show
+    theme: cosmo
+execute:
+  warning: false
+  message: false
+---
+
+# Introducción
+
+**Tarpuy** ("sembrar" en quechua) es el módulo del paquete `inti` (Lozano-Isla) para **planificar experimentos**: genera el diseño aleatorizado, el libro de campo (*fieldbook*) con códigos para cada unidad experimental y el croquis.
+
+En este trabajo se planifica un experimento de germinación de quinua bajo distintas concentraciones de NaCl.
+
+# Paquetes
+
+```{r}
+#| label: paquetes
+# Instalar una sola vez (ver README):
+# install.packages(c("remotes", "tidyverse", "writexl"))
+# remotes::install_github("flavjack/inti")
+
+library(inti)
+library(tidyverse)
+library(writexl)
+```
+
+# Planteamiento del experimento
+
+| Elemento | Descripción |
+|---|---|
+| Objetivo | Evaluar el efecto de la salinidad (NaCl) sobre la germinación de tres variedades de quinua |
+| Factor A | Salinidad: 0, 50, 100 y 150 mM de NaCl |
+| Factor B | Variedad: Blanca de Juli, Salcedo INIA, Pasankalla |
+| Tratamientos | 4 × 3 = 12 combinaciones |
+| Diseño | Completamente al azar (DCA) con arreglo factorial 4 × 3 |
+| Repeticiones | 4 |
+| Unidad experimental | Placa Petri con 25 semillas |
+| Total de unidades | 12 × 4 = 48 placas |
+| Lugar | Laboratorio, UNTRM – Chachapoyas |
+
+Se usa DCA porque en laboratorio las condiciones (temperatura, luz) son homogéneas; no hay un gradiente que justifique bloques.
+
+**Modelo aditivo lineal:**
+
+$$Y_{ijk} = \mu + \alpha_i + \beta_j + (\alpha\beta)_{ij} + \varepsilon_{ijk}$$
+
+donde $\alpha_i$ es el efecto de la salinidad, $\beta_j$ el de la variedad, $(\alpha\beta)_{ij}$ la interacción y $\varepsilon_{ijk}$ el error experimental.
+
+# Factores y niveles
+
+Tarpuy recibe una tabla donde **cada columna es un factor** y sus filas son los niveles. Si un factor tiene menos niveles, se completa con `NA`.
+
+```{r}
+#| label: factores
+factores <- data.frame(
+  salinidad = c("0mM", "50mM", "100mM", "150mM"),
+  variedad  = c("Blanca de Juli", "Salcedo INIA", "Pasankalla", NA)
+)
+
+factores
+```
+
+# Diseño aleatorizado con `tarpuy_design()`
+
+```{r}
+#| label: diseno
+fb <- tarpuy_design(
+  data     = factores,
+  nfactors = 2,        # número de factores
+  type     = "crd",    # DCA (completely randomized design)
+  rep      = 4,        # repeticiones
+  serie    = 100,      # numeración de placas: 101, 102, ...
+  seed     = 2026,     # semilla: hace la aleatorización reproducible
+  project  = "QSAL"    # prefijo del código QR / etiqueta
+)
+
+nrow(fb)   # deben ser 48 unidades
+head(fb, 10)
+```
+
+Columnas principales:
+
+- `qrcode`: código único de cada placa (sirve para las etiquetas).
+- `plots`: número de la unidad experimental.
+- `ntreat`: número del tratamiento (1 a 12).
+- `rep`: repetición.
+- `rows` y `cols`: ubicación física en la mesa del laboratorio.
+
+## Verificación del balance
+
+Cada combinación salinidad × variedad debe aparecer exactamente 4 veces:
+
+```{r}
+#| label: balance
+fb |> count(salinidad, variedad) |>
+  pivot_wider(names_from = variedad, values_from = n)
+```
+
+# Croquis del experimento
+
+```{r}
+#| label: fig-croquis
+#| fig-cap: "Croquis de la distribución aleatoria de las 48 placas Petri"
+#| fig-width: 10
+#| fig-height: 6
+croquis <- fb |>
+  mutate(salinidad = factor(salinidad, levels = factores$salinidad)) |>
+  tarpuy_plotdesign(fill = "salinidad", xlab = "Columnas", ylab = "Filas",
+                    glab = "NaCl", font_family = "sans")
+croquis
+```
+
+# Libro de campo con variables a evaluar
+
+Se agregan las columnas que se llenarán durante el ensayo: el número de semillas germinadas cada día (conteo acumulado, día 1 al 7) y la longitud de radícula al día 7.
+
+```{r}
+#| label: libro-campo
+dias <- paste0("germ_d", 1:7)          # germ_d1 ... germ_d7
+
+libro <- fb |>
+  mutate(semillas = 25) |>
+  select(qrcode, plots, ntreat, rep, salinidad, variedad,
+         rows, cols, semillas) |>
+  bind_cols(
+    as_tibble(setNames(rep(list(NA_real_), length(dias)), dias))
+  ) |>
+  mutate(radicula_mm_d7 = NA_real_,
+         observaciones  = NA_character_)
+
+head(libro)
+```
+
+## Variables que se calcularán con los datos
+
+| Variable | Fórmula |
+|---|---|
+| Porcentaje de germinación (PG) | (germinadas al día 7 / 25) × 100 |
+| Velocidad de germinación (IVG) | Σ (nᵢ / tᵢ) |
+| Tiempo medio de germinación (TMG) | Σ (nᵢ · tᵢ) / Σ nᵢ |
+| Longitud de radícula | medición directa (mm) |
+
+Estas variables se pueden calcular después con el paquete **GerminaR** (también del Dr. Lozano-Isla).
+
+# Exportar a Excel
+
+```{r}
+#| label: exportar
+dir.create("salidas", showWarnings = FALSE)
+
+write_xlsx(
+  list(
+    libro_campo = libro,
+    factores    = factores,
+    diseno      = fb
+  ),
+  path = "salidas/libro_campo_quinua_salinidad.xlsx"
+)
+
+ggsave("salidas/croquis.png", croquis, width = 10, height = 6, dpi = 300)
+```
+
+El archivo `salidas/libro_campo_quinua_salinidad.xlsx` se imprime y se usa en el laboratorio. La columna `qrcode` sirve para hacer las etiquetas de cada placa.
+
+# Alternativa: la app Tarpuy
+
+Lo mismo se puede hacer con la interfaz gráfica, conectada a Google Sheets:
+
+```{r}
+#| eval: false
+inti::tarpuy()
+```
+
+# Referencias
+
+Lozano-Isla, F. (2024). *inti: Tools and Statistical Procedures in Plant Science*. R package. https://inkaverse.com

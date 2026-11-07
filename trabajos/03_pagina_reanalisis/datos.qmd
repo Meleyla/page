@@ -1,0 +1,43 @@
+---
+title: "Base de datos"
+---
+
+## Origen
+
+| | |
+|---|---|
+| Cultivo | Camote costanero (*Ipomoea batatas*) |
+| Lugar | Tacna, sur del Perú |
+| Institución | Centro Internacional de la Papa (CIP) |
+| Diseño | Completamente al azar (DCA) |
+| Tratamientos | 4 (`oo`, `cc`, `ff`, `fc`) |
+| Repeticiones | 3 |
+| Unidad experimental | Parcela con 50 plantas |
+| Variable | Rendimiento total por parcela (kg) |
+| Fuente | Base `sweetpotato` del paquete `agricolae` |
+
+Los virus se transmitieron en los esquejes antes de sembrarlos en campo.
+
+## Datos
+
+```{r}
+#| label: datos
+library(tidyverse)
+
+camote <- read_csv("datos/camote_virus.csv", show_col_types = FALSE)
+
+knitr::kable(camote, col.names = c("Virus", "Rendimiento (kg)"))
+```
+
+[Descargar la base en CSV](datos/camote_virus.csv)
+
+## Diccionario de variables
+
+| Variable | Tipo | Descripción |
+|---|---|---|
+| `virus` | Factor | Tratamiento: `oo` sano, `cc` SPCSV, `ff` SPFMV, `fc` complejo viral |
+| `yield` | Numérica | Rendimiento total de la parcela (kg) |
+
+## Limitación principal
+
+Solo hay **3 repeticiones por tratamiento** (12 datos). Con tan pocos datos el experimento tiene poca potencia para detectar diferencias pequeñas, y las pruebas de supuestos (normalidad, homogeneidad) también pierden capacidad de detectar problemas. Esto se tiene en cuenta en la interpretación.

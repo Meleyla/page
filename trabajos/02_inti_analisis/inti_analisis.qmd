@@ -1,0 +1,260 @@
+---
+title: "Análisis de un experimento agronómico con inti"
+subtitle: "Índice de cosecha en 15 genotipos de papa bajo riego y sequía"
+author: "Bryan Chávez Velaisosa"
+date: today
+lang: es
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    number-sections: true
+    embed-resources: true
+    code-fold: show
+    theme: cosmo
+execute:
+  warning: false
+  message: false
+---
+
+# Introducción
+
+El paquete `inti` (Lozano-Isla) reúne herramientas para analizar experimentos agrícolas: ANOVA, comparación de medias, gráficos listos para publicar y cálculo de heredabilidad. Su módulo de análisis se llama **Yupana** ("contar" en quechua).
+
+En este trabajo se analiza la base `potato`, incluida en `inti`. Proviene de un experimento con **15 genotipos de papa** bajo **dos condiciones hídricas** (irrigado y sequía), en **5 bloques**.
+
+**Pregunta:** ¿la sequía reduce el índice de cosecha (IC) y todos los genotipos responden igual?
+
+# Paquetes y datos
+
+```{r}
+#| label: paquetes
+# Instalar una sola vez (ver README):
+# install.packages(c("remotes", "tidyverse"))
+# remotes::install_github("flavjack/inti")
+
+library(inti)
+library(tidyverse)
+
+fb <- potato
+glimpse(fb[, c("treat", "geno", "bloque", "hi", "tubdw", "biomdw")])
+```
+
+Variables usadas:
+
+- `treat`: condición hídrica (irrigado, sequia).
+- `geno`: genotipo (G01 a G15).
+- `bloque`: bloque (I a V).
+- `hi`: índice de cosecha = peso seco de tubérculos / biomasa total.
+
+## Estructura del experimento
+
+```{r}
+#| label: estructura
+fb |> count(treat, bloque) |> pivot_wider(names_from = bloque, values_from = n)
+```
+
+Es un **DBCA con arreglo factorial 15 × 2** (150 unidades experimentales).
+
+$$Y_{ijk} = \mu + \rho_k + \alpha_i + \beta_j + (\alpha\beta)_{ij} + \varepsilon_{ijk}$$
+
+# Exploración de los datos
+
+```{r}
+#| label: fig-exploracion
+#| fig-cap: "Distribución del índice de cosecha por genotipo y condición hídrica"
+#| fig-width: 10
+#| fig-height: 5
+plot_raw(data = fb, type = "boxplot", x = "geno", y = "hi", group = "treat",
+         ylab = "Índice de cosecha", xlab = "Genotipo", glab = "Condición")
+```
+
+# Análisis de varianza
+
+## Primer modelo y revisión de supuestos
+
+Antes de interpretar el ANOVA hay que comprobar que los residuos sean normales y que las varianzas sean homogéneas.
+
+```{r}
+#| label: modelo-inicial
+m0 <- aov(hi ~ bloque + geno * treat, data = fb)
+
+shapiro.test(residuals(m0))                                  # normalidad
+car::leveneTest(hi ~ interaction(geno, treat), data = fb)   # homogeneidad
+```
+
+```{r}
+#| label: fig-supuestos-0
+#| fig-cap: "Diagnóstico de residuos del modelo inicial"
+#| fig-width: 9
+#| fig-height: 7
+plot_diagnostic(data = fb, formula = hi ~ bloque + geno * treat) |>
+  cowplot::plot_grid(plotlist = _, ncol = 2)
+```
+
+La prueba de Shapiro-Wilk da *p* < 0.05, así que **los residuos no son normales**. Los gráficos muestran que la causa es un punto muy alejado del resto. Se buscan observaciones con residuo estandarizado mayor a 3 en valor absoluto:
+
+```{r}
+#| label: atipicos
+fb <- fb |> mutate(res_std = rstandard(m0))
+
+fb |> filter(abs(res_std) > 3) |> select(geno, treat, bloque, hi, res_std)
+```
+
+Hay **una sola observación atípica** (G05 en sequía, bloque IV, con un IC muy bajo). Puede ser un error de registro o una planta dañada. Se excluye y se vuelve a ajustar el modelo.
+
+## Modelo final con `yupana_analysis()`
+
+```{r}
+#| label: anova
+fb_limpio <- fb |> filter(abs(res_std) <= 3) |> select(-res_std)
+
+nrow(fb_limpio)   # 149 observaciones
+
+rsl <- yupana_analysis(
+  data          = fb_limpio,
+  response      = "hi",
+  model_factors = "bloque + geno * treat",
+  comparison    = c("geno", "treat"),
+  test_comp     = "SNK",
+  sig_level     = 0.05
+)
+
+anova(rsl$anova)
+```
+
+```{r}
+#| label: supuestos-final
+shapiro.test(residuals(rsl$anova))
+car::leveneTest(hi ~ interaction(geno, treat), data = fb_limpio)
+```
+
+Ahora ambas pruebas dan *p* > 0.05: **se cumplen los supuestos** y el ANOVA es válido.
+
+```{r}
+#| label: fig-supuestos
+#| fig-cap: "Diagnóstico de residuos del modelo final"
+#| fig-width: 9
+#| fig-height: 7
+plot_diagnostic(data = fb_limpio, formula = hi ~ bloque + geno * treat) |>
+  cowplot::plot_grid(plotlist = _, ncol = 2)
+```
+
+**Lectura del ANOVA (α = 0.05):**
+
+- **Bloque**: significativo. Bloquear fue útil porque había variación entre bloques.
+- **Genotipo**: altamente significativo; el IC depende mucho del genotipo.
+- **Condición hídrica**: significativo; la sequía cambia el IC.
+- **Genotipo × condición**: **no significativo** (*p* ≈ 0.06). No hay evidencia de que los genotipos respondan distinto a la sequía, así que se interpretan los **efectos principales** por separado.
+
+# Comparación de medias
+
+## Efecto de la sequía (Tukey)
+
+```{r}
+#| label: tukey-treat
+mc_treat <- mean_comparison(
+  data          = fb_limpio,
+  response      = "hi",
+  model_factors = "bloque + geno * treat",
+  comparison    = "treat",
+  test_comp     = "TUKEY"
+)
+
+mc_treat$comparison |> select(treat, hi, ste, sig)
+```
+
+## Efecto del genotipo (SNK)
+
+```{r}
+#| label: snk-geno
+mc_geno <- mean_comparison(
+  data          = fb_limpio,
+  response      = "hi",
+  model_factors = "bloque + geno * treat",
+  comparison    = "geno",
+  test_comp     = "SNK"
+)
+
+mc_geno$comparison |> select(geno, hi, ste, sig) |> arrange(desc(hi))
+```
+
+```{r}
+#| label: fig-medias
+#| fig-cap: "Índice de cosecha por genotipo (media ± error estándar). Letras distintas indican diferencias significativas (SNK, α = 0.05)"
+#| fig-width: 10
+#| fig-height: 5
+mc_geno$comparison |> 
+  plot_smr(type   = "bar",
+           x      = "geno",
+           y      = "hi",
+           xlab   = "Genotipo",
+           ylab   = "Índice de cosecha",
+           error  = "ste",
+           sig    = "sig",
+           legend = "none",
+           color  = FALSE)
+```
+
+## Genotipo en cada condición
+
+Aunque la interacción no fue significativa, conviene ver el patrón:
+
+```{r}
+#| label: fig-interaccion
+#| fig-cap: "Índice de cosecha por genotipo en riego y sequía (media ± error estándar)"
+#| fig-width: 11
+#| fig-height: 5
+rsl$meancomp |> 
+  plot_smr(type   = "bar",
+           x      = "geno",
+           y      = "hi",
+           group  = "treat",
+           xlab   = "Genotipo",
+           ylab   = "Índice de cosecha",
+           glab   = "Condición",
+           error  = "ste",
+           gtext  = c("Irrigado", "Sequía"),
+           color  = c("#2E86AB", "#E07A5F"))
+```
+
+Casi todos los genotipos bajan su IC en sequía, en magnitudes parecidas. Esto concuerda con la interacción no significativa.
+
+# Heredabilidad con `H2cal()`
+
+La heredabilidad (H²) indica qué proporción de la variación del IC se debe a los genotipos y no al ambiente. Se calcula con modelos mixtos, por separado para cada condición.
+
+```{r}
+#| label: heredabilidad
+h2 <- fb_limpio |>
+  split(~ treat) |>
+  map(\(d) H2cal(data = d,
+                 trait = "hi",
+                 gen.name = "geno",
+                 rep.n = 5,
+                 fixed.model  = ~ 0 + (1|bloque) + geno,
+                 random.model = ~ 1 + (1|bloque) + (1|geno),
+                 emmeans = TRUE,
+                 plot_diag = FALSE))
+
+map_dfr(h2, \(x) x$tabsmr, .id = "condicion") |>
+  select(condicion, mean, V.g, V.e, H2.s, H2.p, H2.c) |>
+  mutate(across(where(is.numeric), \(x) round(x, 3)))
+```
+
+- `V.g`: varianza genotípica; `V.e`: varianza del error.
+- `H2.s`, `H2.p`, `H2.c`: heredabilidad estándar, de Piepho y de Cullis.
+
+Valores de H² cercanos a 1 indican que el IC está muy controlado por el genotipo, lo que favorece la selección.
+
+# Conclusiones
+
+1. Se detectó y excluyó una observación atípica (G05, sequía, bloque IV). Con ella el modelo no cumplía normalidad; sin ella cumple ambos supuestos.
+2. El índice de cosecha varía mucho entre genotipos; es el factor con mayor efecto.
+3. La sequía reduce el índice de cosecha promedio respecto al riego.
+4. No hay interacción significativa: la sequía afecta a los genotipos de forma similar, así que los mejores genotipos en riego también lo son en sequía.
+5. La alta heredabilidad del IC indica que es un buen criterio de selección.
+
+# Referencias
+
+Lozano-Isla, F. (2024). *inti: Tools and Statistical Procedures in Plant Science*. R package. https://inkaverse.com
