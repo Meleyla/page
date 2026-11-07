@@ -1,7 +1,7 @@
 ---
 title: "Reanálisis de un experimento de virus en camote"
 subtitle: "¿Cambian las conclusiones si se usa otra prueba de comparación de medias?"
-author: "Bryan Chávez Velaisosa"
+author: "Meleyla Soroe Torres"
 date: today
 ---
 
